@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+export FLASK_APP=mail_sender_daemon
+flask $*

@@ -27,8 +27,8 @@ class Mailgun():
         params["from"] = src
         self._build_receivers_params(params, to=to, **kwargs)
 
-        if "reply-to" in kwargs:
-            params["h:Reply-To"] = kwargs["reply-to"]
+        if "reply_to" in kwargs:
+            params["h:Reply-To"] = kwargs["reply_to"]
         if "subject" in kwargs:
             params["subject"] = kwargs["subject"]
 

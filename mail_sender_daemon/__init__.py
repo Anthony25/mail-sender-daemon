@@ -2,6 +2,7 @@
 import os
 import sys
 from flask import Flask
+from flask_restplus import Api
 
 APP_NAME = "mail-sender-daemon"
 APP_VERSION = "0.0.1"
@@ -15,4 +16,4 @@ try:
 except FileNotFoundError:
     sys.exit(1)
 
-from mail_sender_daemon import api
+from mail_sender_daemon.api import api

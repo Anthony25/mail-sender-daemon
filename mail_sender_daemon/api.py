@@ -54,8 +54,8 @@ class SendMail(Resource):
     def post(self):
         resp_by_provider = []
         try:
-            # Cannot build it through a comprehensive list as providers
-            # responses want to be kept even when a mail cannot be sent
+            # Cannot be built through a comprehensive list, as providers
+            # responses have to be kept even when a mail cannot be sent
             for provider_try in self._send_each_provider_until_passing():
                 resp_by_provider.append({
                     "provider": provider_try[0],
@@ -80,7 +80,7 @@ class SendMail(Resource):
 
                 yield provider, response.status_code, response.reason
                 if response.ok:
-                    return 200
+                    return
             except Exception as e:
                 app.logger.error("Error sending mail to {}".format(
                     mail_params["to"]

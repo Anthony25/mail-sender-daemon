@@ -1,0 +1,37 @@
+mail-sender-daemon
+==================
+
+Daemon sending mail through AmazonSES and Mailgun, with an automatic failover.
+
+Related to the [Uber coding challenge][uber-challenge-instructions].
+
+
+Installation
+------------
+
+Run:
+
+```
+pip3 install -e .
+```
+
+
+Configuration
+-------------
+
+The configuration file is looked up into the following paths, in this specific
+order: `~/.config/mail-sender-daemon/config.yml`,
+`/etc/mail-sender-daemon/config.yml`, and, if you cloned this repository, in
+the project's root.
+
+A self-documented example is available as `config.yml.default`.
+
+
+License
+-------
+
+Tool under the AGPLv3 license. Do not hesitate to report bugs, ask me some
+questions or do some pull request if you want to!
+
+
+[uber-challenge-instructions]: https://github.com/uber/coding-challenge-tools/blob/master/coding_challenge.md#email-service

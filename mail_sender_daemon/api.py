@@ -71,7 +71,7 @@ class SendMail(Resource):
             status = 200
         except MailNotSentError as e:
             app.logger.error("Error sending mail: {}".format(resp_by_provider))
-            status = 502
+            status = 503
         return resp_by_provider, status
 
     def _send_with_failover(self, mail_params, src_name=None):
@@ -90,7 +90,7 @@ class SendMail(Resource):
                 app.logger.error("Error sending mail to {}".format(
                     mail_params["to"]
                 ), exc_info=e)
-                yield provider, 502, "Internal Server Error"
+                yield provider, 500, "Internal Server Error"
 
         raise MailNotSentError()
 

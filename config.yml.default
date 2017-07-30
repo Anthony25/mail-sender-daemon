@@ -1,2 +1,15 @@
 
 SWAGGER_UI_DOC_EXPANSION: "full"
+
+SEND_FROM:
+  amazon_ses: "user@example.com"
+  mailgun: "postmaster@sandbox123.mailgun.org"
+
+# MailGun configuration
+MAILGUN_API_KEY:  "MAILGUN API KEY"
+MAILGUN_API_BASE_URL: "https://api.mailgun.net/v3/YOUR_DOMAIN_NAME/"
+
+# AmazonSES configuration
+AMAZON_API_ACCESS_KEY: "AMAZON API ACCESS KEY"
+AMAZON_API_SECRET_KEY: "AMAZON API SECRET KEY"
+AMAZON_API_DOMAIN: "https://email.us-west-2.amazonaws.com"

@@ -47,4 +47,4 @@ def build_app_config(custom_path=None):
                 "Please create a config.yml in one of these directories:\n"
                 "\t{}".format("\n\t".join(CONFIG_DIRS))
             )
-        raise FileNotFoundError
+        raise

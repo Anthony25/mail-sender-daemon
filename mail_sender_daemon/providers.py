@@ -80,17 +80,17 @@ class AmazonSES():
 
     def send(self, src, to, **kwargs):
         headers = self._build_request_headers()
-        params = {}
+        params = {"Action": "SendEmail", }
         self._build_headers_params(params, src, to, **kwargs)
         self._build_content_params(params, **kwargs)
 
-        return requests.get(self.api_domain, headers=headers, data=params)
+        return requests.get(self.api_domain, headers=headers, params=params)
 
     def _build_request_headers(self):
         """
         Build needed request header for AWS
         """
-        date = datetime.datetime.utcnow().strftime()
+        date = datetime.datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
 
         return {
             "Content-type": "application/x-www-form-urlencoded",
@@ -106,7 +106,8 @@ class AmazonSES():
         AWS signature algorithm
         """
         h = hmac.new(
-            key=self._api_secret_key, msg=date, digestmod=hashlib.sha256
+            key=self._api_secret_key.encode(), msg=date.encode(),
+            digestmod=hashlib.sha256
         )
         return base64.b64encode(h.digest()).decode()
 
@@ -152,7 +153,7 @@ class AmazonSES():
             ("to", "cc", "bcc")
         )
         for aws_param, k in assoc_aws_param_kwargs_keys:
-            addresses = kwargs.get(k, None)
+            addresses = kwargs.get(k, [])
             if isinstance(addresses, str):
                 addresses = (addresses, )
             for i, addr in enumerate(addresses, 1):

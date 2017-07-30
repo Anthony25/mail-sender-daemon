@@ -52,15 +52,21 @@ class SendMail(Resource):
     @api.response(400, "Validation error")
     @api.expect(mail_fields, validate=True)
     def post(self):
+        mail_params = request.json
+        try:
+            src_name = mail_params.pop("from")
+        except KeyError:
+            src_name = None
+
         resp_by_provider = []
         try:
             # Cannot be built through a comprehensive list, as providers
             # responses have to be kept even when a mail cannot be sent
-            for provider_try in self._send_each_provider_until_passing():
+            for response in self._send_with_failover(mail_params, src_name):
                 resp_by_provider.append({
-                    "provider": provider_try[0],
-                    "status_code": provider_try[1],
-                    "msg":  provider_try[2],
+                    "provider": response[0],
+                    "status_code": response[1],
+                    "msg":  response[2],
                 })
             status = 200
         except MailNotSentError as e:
@@ -68,11 +74,10 @@ class SendMail(Resource):
             status = 502
         return resp_by_provider, status
 
-    def _send_each_provider_until_passing(self):
-        mail_params = request.json
+    def _send_with_failover(self, mail_params, src_name=None):
         for provider, sender in mail_providers.items():
             try:
-                src = self._get_sender_for_provider(mail_params, provider)
+                src = self._get_sender_for_provider(provider, src_name)
                 response = sender.send(src=src, **mail_params)
                 app.logger.debug(
                     "{} response: {}".format(provider, response.content)
@@ -89,10 +94,8 @@ class SendMail(Resource):
 
         raise MailNotSentError()
 
-    def _get_sender_for_provider(self, mail_params, provider):
-        try:
-            src_name = mail_params.pop("from")
-        except KeyError:
-            src_name = APP_NAME.title()
-
-        return "{} <{}>".format(src_name, app.config["SEND_FROM"][provider])
+    def _get_sender_for_provider(self, provider, src_name=None):
+        return "{} <{}>".format(
+            APP_NAME.title() if src_name is None else src_name,
+            app.config["SEND_FROM"][provider]
+        )

@@ -25,7 +25,7 @@ class Mailgun():
         return requests.post(send_url, auth=auth, data=params, files=files)
 
     def get_send_url(self):
-        return urllib.parse.urljoin(self.api_base_url, "messages")
+        return "{}/{}".format(self.api_base_url.rstrip("/"), "messages")
 
     def _build_headers_params(self, params, src, to, **kwargs):
         params["from"] = src
@@ -33,8 +33,7 @@ class Mailgun():
 
         if "reply_to" in kwargs:
             params["h:Reply-To"] = kwargs["reply_to"]
-        if "subject" in kwargs:
-            params["subject"] = kwargs["subject"]
+        params["subject"] = kwargs.get("subject", "No Subject")
 
         return params
 
@@ -56,9 +55,8 @@ class Mailgun():
 
         return params
 
-    def _build_content_params(self, params, text=None, html=None, **kwargs):
-        if text:
-            params["text"] = text
+    def _build_content_params(self, params, text="", html=None, **kwargs):
+        params["text"] = text
         if html:
             params["html"] = html
         return params
@@ -134,9 +132,7 @@ class AmazonSES():
             for i, addr in enumerate(reply_to, 1):
                 params["ReplyToAddresses.member.{}".format(i)] = addr
 
-        if "subject" in kwargs:
-            params["Message.Subject.Data"] = kwargs["subject"]
-
+        params["Message.Subject.Data"] = kwargs.get("subject", "No Subject")
         return params
 
     def _build_receivers_params(self, params, **kwargs):
@@ -161,9 +157,8 @@ class AmazonSES():
 
         return params
 
-    def _build_content_params(self, params, text=None, html=None, **kwargs):
-        if text:
-            params["Message.Body.Text.Data"] = text
+    def _build_content_params(self, params, text="", html=None, **kwargs):
+        params["Message.Body.Text.Data"] = text
         if html:
             params["Message.Body.Html.Data"] = html
         return params

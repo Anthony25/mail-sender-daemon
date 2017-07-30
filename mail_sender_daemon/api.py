@@ -24,7 +24,9 @@ mail_fields = api.model("MailSender", {
     "bcc": fields.List(
         fields.String(description="Blind Carbon Copy address")
     ),
-    "reply_to": fields.String(description="Reply-To address"),
+    "reply_to": fields.List(
+        fields.String(description="Reply-To address")
+    ),
     "subject": fields.String(description="Mail subject"),
     "text": fields.String(description="Mail content, as text"),
     "html": fields.String(description="Mail content, as html"),

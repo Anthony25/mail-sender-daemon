@@ -31,8 +31,12 @@ class Mailgun():
         params["from"] = src
         self._build_receivers_params(params, to=to, **kwargs)
 
-        if "reply_to" in kwargs:
-            params["h:Reply-To"] = kwargs["reply_to"]
+        reply_to = kwargs.get("reply_to", None)
+        if reply_to:
+            if isinstance(reply_to, str):
+                 reply_to = tuple(reply_to)
+            params["h:Reply-To"] = ",".join(reply_to)
+
         params["subject"] = kwargs.get("subject", "No Subject")
 
         return params

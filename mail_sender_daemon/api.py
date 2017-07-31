@@ -13,7 +13,20 @@ api = Api(
     ), default="mail", default_label="Mail namespace"
 )
 
-mail_fields = api.model("MailSender", {
+mail_providers = {
+    "amazon_ses": AmazonSES(
+        api_access_key=app.config["AMAZON_API_ACCESS_KEY"],
+        api_secret_key=app.config["AMAZON_API_SECRET_KEY"],
+        api_domain=app.config["AMAZON_API_DOMAIN"],
+    ),
+    "mailgun": Mailgun(
+        api_key=app.config["MAILGUN_API_KEY"],
+        api_base_url=app.config["MAILGUN_API_BASE_URL"],
+    ),
+}
+
+
+mail_model = api.model("MailSender", {
     "from": fields.String(description="Sender name (address is automatic)"),
     "to": fields.List(
         fields.String(description="Receiver address"), required=True
@@ -32,25 +45,35 @@ mail_fields = api.model("MailSender", {
     "html": fields.String(description="Mail content, as html"),
 })
 
-
-mail_providers = {
-    "amazon_ses": AmazonSES(
-        api_access_key=app.config["AMAZON_API_ACCESS_KEY"],
-        api_secret_key=app.config["AMAZON_API_SECRET_KEY"],
-        api_domain=app.config["AMAZON_API_DOMAIN"],
-    ),
-    "mailgun": Mailgun(
-        api_key=app.config["MAILGUN_API_KEY"],
-        api_base_url=app.config["MAILGUN_API_BASE_URL"],
+response_common_fields = {
+    "providers": fields.Nested(
+        description="Attempted providers",
+        model=api.model("ProviderResponse", {
+            "provider": fields.String(description="Provider name"),
+            "status_code": fields.Integer(description="Request status code"),
+            "msg": fields.String(description="Request reason message"),
+        }),
     ),
 }
+# if returns 200, the provider used to sent the email is added
+response_ok_fields = response_common_fields.copy()
+response_ok_fields.update({
+    "provider_used": fields.String(description="Provider name"),
+})
+
+response_error_model = api.model(
+    "MailSenderErrorResponse", response_common_fields,
+)
+response_ok_model = api.model(
+    "MailSenderOKResponse", response_ok_fields,
+)
 
 
 @api.route("/send")
 class SendMail(Resource):
-    @api.response(200, "Mail sent")
-    @api.response(400, "Validation error")
-    @api.expect(mail_fields, validate=True)
+    @api.response(200, "Mail sent", response_ok_model)
+    @api.response(400, "Validation error", response_error_model)
+    @api.expect(mail_model, validate=True)
     def post(self):
         mail_params = request.json
         try:
@@ -58,21 +81,25 @@ class SendMail(Resource):
         except KeyError:
             src_name = None
 
-        resp_by_provider = []
+        sending_details = {"providers": [], }
         try:
             # Cannot be built through a comprehensive list, as providers
             # responses have to be kept even when a mail cannot be sent
             for response in self._send_with_failover(mail_params, src_name):
-                resp_by_provider.append({
+                sending_details["providers"].append({
                     "provider": response[0],
                     "status_code": response[1],
                     "msg":  response[2],
                 })
+
+            sending_details["provider_used"] = (
+                sending_details["providers"][-1]["provider"]
+            )
             status = 200
         except MailNotSentError as e:
-            app.logger.error("Error sending mail: {}".format(resp_by_provider))
+            app.logger.error("Error sending mail: {}".format(sending_details))
             status = 503
-        return resp_by_provider, status
+        return sending_details, status
 
     def _send_with_failover(self, mail_params, src_name=None):
         for provider, sender in mail_providers.items():

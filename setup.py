@@ -31,7 +31,8 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        "appdirs", "Flask", "Flask-Script", "flask-restplus",
+        "appdirs", "Flask", "Flask-Script", "flask-restplus", "PyYAML",
+        "requests"
     ],
 
     setup_requires=["pytest-runner", ],

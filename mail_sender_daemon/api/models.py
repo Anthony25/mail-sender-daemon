@@ -4,18 +4,21 @@ from . import api
 
 
 mail_model = api.model("MailSender", {
-    "from": fields.String(description="Sender name (address is automatic)"),
+    "from": fields.String(
+        description=(
+            "Sender name (address is automatically generated depending on the "
+            "provider)"
+        )
+    ),
     "to": fields.List(
-        fields.String(description="Receiver address"), required=True
+        fields.String(), required=True, description="Receivers addresses"
     ),
-    "cc": fields.List(
-        fields.String(description="Carbon Copy address")
-    ),
+    "cc": fields.List(fields.String(), description="Carbon Copy addresses"),
     "bcc": fields.List(
-        fields.String(description="Blind Carbon Copy address")
+        fields.String(), description="Blind Carbon Copy addresses"
     ),
     "reply_to": fields.List(
-        fields.String(description="Reply-To address")
+        fields.String(), description="Reply-To addresses"
     ),
     "subject": fields.String(description="Mail subject"),
     "text": fields.String(description="Mail content, as text"),

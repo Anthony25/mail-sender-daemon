@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 import requests
 
 from mail_sender_daemon.exceptions import UnvalidatedAddrError
+from . import _BaseProvider
 
 
 class _BaseAmazonSES():
@@ -40,9 +41,15 @@ class _BaseAmazonSES():
         return base64.b64encode(h.digest()).decode()
 
 
-class AmazonSES(_BaseAmazonSES):
-    def __init__(self, api_domain, *args, **kwargs):
+class AmazonSES(_BaseAmazonSES, _BaseProvider):
+    def __init__(self, api_domain, premium=False, *args, **kwargs):
+        """
+        param api_domain: Amazon API domain
+        param premium: is the account a premium account. If premium, authorized
+                       addresses will not be checked before sending it.
+        """
         self.api_domain = api_domain
+        self.premium = premium
         super().__init__(*args, **kwargs)
 
         self.validation_strategy = _AmazonSESValidation(self, *args, **kwargs)
@@ -118,7 +125,8 @@ class _AmazonSESSend(_BaseAmazonSES):
 
     def send(self, src, to, **kwargs):
         to = tuple(to)
-        self._check_every_addr_valids(*to)
+        if not self._parent_strategy.premium:
+            self._check_every_addr_valids(*to)
 
         headers = self._build_request_headers()
         params = {"Action": "SendEmail", }

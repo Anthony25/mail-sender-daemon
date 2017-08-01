@@ -1,8 +1,9 @@
 
 import requests
+from . import _BaseProvider
 
 
-class Mailgun():
+class Mailgun(_BaseProvider):
     def __init__(self, api_key, api_base_url):
         self.api_key = api_key
         self.api_base_url = api_base_url

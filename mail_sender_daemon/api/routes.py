@@ -9,7 +9,10 @@ from mail_sender_daemon.exceptions import (
 )
 
 from . import api
-from .models import mail_model, response_ok_model, response_error_model
+from .models import (
+    mail_model, send_ok_model, send_error_model, validation_status_ok_model,
+    validation_error_model
+)
 
 
 mail_providers = {
@@ -25,10 +28,49 @@ mail_providers = {
 }
 
 
+@api.route("/validation/<string:address>")
+class Validation(Resource):
+    @api.doc('Check validation status of an address')
+    @api.response(200, "Validation status", validation_status_ok_model)
+    @api.response(400, "Validation error")
+    def get(self, address):
+        statuses = {"address": address}
+        for name, provider in mail_providers.items():
+            try:
+                statuses[name] = provider.check_addr_validation_status(address)
+            except NotImplementedError:
+                continue
+
+        return statuses, 200
+
+    @api.doc('Validate an address')
+    @api.response(200, "Address validated")
+    @api.response(503, "Address validation error", validation_error_model)
+    def post(self, address):
+        status = 200
+        status_by_provider = {"providers": []}
+        for name, provider in mail_providers.items():
+            try:
+                resp = provider.validate_addr(address)
+                if not resp.ok:
+                    status = 503
+
+                status_by_provider["providers"].append({
+                    "provider": name,
+                    "status_code": resp.status_code,
+                    "msg":  resp.reason,
+                })
+            except NotImplementedError:
+                continue
+
+        return status_by_provider, status
+
+
 @api.route("/send")
 class SendMail(Resource):
-    @api.response(200, "Mail sent", response_ok_model)
-    @api.response(400, "Validation error", response_error_model)
+    @api.doc('Send Mail')
+    @api.response(200, "Mail sent", send_ok_model)
+    @api.response(400, "Validation error", send_error_model)
     @api.expect(mail_model, validate=True)
     def post(self):
         mail_params = request.json

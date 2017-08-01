@@ -86,7 +86,7 @@ class _AmazonSESValidation(_BaseAmazonSES):
         r = self._validation_status_request(*addresses)
         r.raise_for_status()
 
-        soup = BeautifulSoup(r.content, "lxml")
+        soup = BeautifulSoup(r.content, "html.parser")
         # Unvalidated by default
         statuses = {addr: "Unvalidated" for addr in addresses}
         for entry in soup.find_all("entry"):

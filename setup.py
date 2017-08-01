@@ -32,7 +32,7 @@ setup(
     zip_safe=False,
     install_requires=[
         "appdirs", "Flask", "Flask-Script", "flask-restplus", "PyYAML",
-        "requests"
+        "lxml", "requests"
     ],
 
     setup_requires=["pytest-runner", ],

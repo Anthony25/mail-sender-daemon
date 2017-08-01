@@ -3,22 +3,16 @@ import base64
 import datetime
 import hashlib
 import hmac
+from bs4 import BeautifulSoup
 import requests
 
+from mail_sender_daemon.exceptions import UnvalidatedAddrError
 
-class AmazonSES():
-    def __init__(self, api_access_key, api_secret_key, api_domain):
+
+class _BaseAmazonSES():
+    def __init__(self, api_access_key, api_secret_key):
         self._api_access_key = api_access_key
         self._api_secret_key = api_secret_key
-        self.api_domain = api_domain
-
-    def send(self, src, to, **kwargs):
-        headers = self._build_request_headers()
-        params = {"Action": "SendEmail", }
-        self._build_headers_params(params, src, to, **kwargs)
-        self._build_content_params(params, **kwargs)
-
-        return requests.get(self.api_domain, headers=headers, params=params)
 
     def _build_request_headers(self):
         """
@@ -45,7 +39,111 @@ class AmazonSES():
         )
         return base64.b64encode(h.digest()).decode()
 
-    def _build_headers_params(self, params, src, to, **kwargs):
+
+class AmazonSES(_BaseAmazonSES):
+    def __init__(self, api_domain, *args, **kwargs):
+        self.api_domain = api_domain
+        super().__init__(*args, **kwargs)
+
+        self.validation_strategy = _AmazonSESValidation(self, *args, **kwargs)
+        self.send_strategy = _AmazonSESSend(self, *args, **kwargs)
+
+    def validate_addr(self, address):
+        return self.validation_strategy.validate_addr(address)
+
+    def is_validated_addr(self, address):
+        return self.validation_strategy.is_validated_addr(address)
+
+    def check_addr_validation_status(self, *addresses):
+        return self.validation_strategy.check_addr_validation_status(
+            *addresses
+        )
+
+    def send(self, src, to, **kwargs):
+        return self.send_strategy.send(src, to, **kwargs)
+
+
+class _AmazonSESValidation(_BaseAmazonSES):
+    def __init__(self, parent_strategy, *args, **kwargs):
+        self._parent_strategy = parent_strategy
+        super().__init__(*args, **kwargs)
+
+    def is_validated_addr(self, address):
+        validation_status = self.check_addr_validation_status(address)[address]
+        return self.is_valid_addr_status(validation_status)
+
+    def is_valid_addr_status(self, status):
+        return status.lower() == "success"
+
+    def check_addr_validation_status(self, *addresses):
+        r = self._validation_status_request(*addresses)
+        r.raise_for_status()
+
+        soup = BeautifulSoup(r.content, "lxml")
+        # Unvalidated by default
+        statuses = {addr: "Unvalidated" for addr in addresses}
+        for entry in soup.find_all("entry"):
+            statuses[entry.key.text] = entry.verificationstatus.text
+
+        return statuses
+
+    def _validation_status_request(self, *addresses):
+        headers = self._build_request_headers()
+        params = {"Action": "GetIdentityVerificationAttributes", }
+        params.update({
+            "Identities.member.{}".format(i): address
+            for i, address in enumerate(addresses, 1)
+        })
+
+        return requests.get(
+            self._parent_strategy.api_domain, headers=headers, params=params
+        )
+
+    def validate_addr(self, address):
+        headers = self._build_request_headers()
+        params = {
+            "Action": "VerifyEmailIdentity",
+            "EmailAddress": address
+        }
+
+        return requests.get(
+            self._parent_strategy.api_domain, headers=headers, params=params
+        )
+
+
+class _AmazonSESSend(_BaseAmazonSES):
+    def __init__(self, parent_strategy, *args, **kwargs):
+        self._parent_strategy = parent_strategy
+        super().__init__(*args, **kwargs)
+
+    def send(self, src, to, **kwargs):
+        to = tuple(to)
+        self._check_every_addr_valids(*to)
+
+        headers = self._build_request_headers()
+        params = {"Action": "SendEmail", }
+        self._build_mail_headers_params(params, src, to, **kwargs)
+        self._build_mail_content_params(params, **kwargs)
+
+        return requests.get(
+            self._parent_strategy.api_domain, headers=headers, params=params
+        )
+
+    def _check_every_addr_valids(self, *addresses):
+        validation_statuses = (
+            self._parent_strategy.check_addr_validation_status(*addresses)
+        )
+
+        is_valid_addr_status_fn = (
+            self._parent_strategy.validation_strategy.is_valid_addr_status
+        )
+        for addr, validation_status in validation_statuses.items():
+            if not is_valid_addr_status_fn(validation_status):
+                raise UnvalidatedAddrError(addr)
+
+        return True
+
+    def _build_mail_headers_params(self, params, src, to, **kwargs):
         """
         Build mail header parameters
 
@@ -93,7 +191,7 @@ class AmazonSES():
 
         return params
 
-    def _build_content_params(self, params, text="", html=None, **kwargs):
+    def _build_mail_content_params(self, params, text="", html=None, **kwargs):
         params["Message.Body.Text.Data"] = text
         if html:
             params["Message.Body.Html.Data"] = html

@@ -4,7 +4,9 @@ from flask_restplus import Resource
 
 from mail_sender_daemon import app, APP_NAME
 from mail_sender_daemon.providers import Mailgun, AmazonSES
-from mail_sender_daemon.exceptions import MailNotSentError
+from mail_sender_daemon.exceptions import (
+    MailNotSentError, UnvalidatedAddrError
+)
 
 from . import api
 from .models import mail_model, response_ok_model, response_error_model
@@ -67,6 +69,9 @@ class SendMail(Resource):
                 yield provider, response.status_code, response.reason
                 if response.ok:
                     return
+            except UnvalidatedAddrError as e:
+                app.logger.error(e)
+                yield provider, 400, str(e)
             except Exception as e:
                 app.logger.error("Error sending mail to {}".format(
                     mail_params["to"]

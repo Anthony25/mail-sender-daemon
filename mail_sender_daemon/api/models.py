@@ -28,7 +28,7 @@ mail_model = api.model("MailSender", {
 status_by_provider_fields = {
     "providers": fields.Nested(
         description="Attempted providers",
-        model=api.model("ProviderResponse", {
+        model=api.model("StatusByProvider", {
             "provider": fields.String(description="Provider name"),
             "status_code": fields.Integer(description="Request status code"),
             "msg": fields.String(description="Request reason message"),
@@ -45,7 +45,7 @@ validation_status_by_provider_fields = {
     "address": fields.String(description="Email address"),
     "providers": fields.Nested(
         description="Provider",
-        model=api.model("ProviderResponse", {
+        model=api.model("ProviderValidation", {
             "provider": fields.String(description="Provider name"),
             "validation": fields.String(
                 description="Validation status"

@@ -34,10 +34,15 @@ class Validation(Resource):
     @api.response(200, "Validation status", validation_status_ok_model)
     @api.response(400, "Validation error")
     def get(self, address):
-        statuses = {"address": address}
+        statuses = {"address": address, "providers": []}
         for name, provider in mail_providers.items():
             try:
-                statuses[name] = provider.check_addr_validation_status(address)
+                statuses["providers"].append({
+                    "provider": name,
+                    "validation": (
+                        provider.check_addr_validation_status(address)[address]
+                    ),
+                })
             except NotImplementedError:
                 continue
 

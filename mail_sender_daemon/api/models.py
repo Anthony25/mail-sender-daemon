@@ -26,14 +26,14 @@ mail_model = api.model("MailSender", {
 })
 
 status_by_provider_fields = {
-    "providers": fields.Nested(
+    "providers": fields.List(fields.Nested(
         description="Attempted providers",
         model=api.model("StatusByProvider", {
             "provider": fields.String(description="Provider name"),
             "status_code": fields.Integer(description="Request status code"),
             "msg": fields.String(description="Request reason message"),
         }),
-    ),
+    )),
 }
 # if returns 200, the provider used to sent the email is added
 send_ok_fields = status_by_provider_fields.copy()
@@ -43,7 +43,7 @@ send_ok_fields.update({
 
 validation_status_by_provider_fields = {
     "address": fields.String(description="Email address"),
-    "providers": fields.Nested(
+    "providers": fields.List(fields.Nested(
         description="Provider",
         model=api.model("ProviderValidation", {
             "provider": fields.String(description="Provider name"),
@@ -51,7 +51,7 @@ validation_status_by_provider_fields = {
                 description="Validation status"
             ),
         }),
-    ),
+    )),
 }
 
 

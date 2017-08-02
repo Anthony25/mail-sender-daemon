@@ -9,7 +9,7 @@ class MailNotSentError(Exception):
 
 class UnvalidatedAddrError(Exception):
     """
-    Mail not sent
+    Address not validated
     """
     def __init__(self, address):
         super().__init__("address {} is not validated".format(address))

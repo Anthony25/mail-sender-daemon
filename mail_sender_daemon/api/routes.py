@@ -70,7 +70,7 @@ class Validation(Resource):
 class SendMail(Resource):
     @api.doc('Send Mail')
     @api.response(200, "Mail sent", send_ok_model)
-    @api.response(400, "Validation error", send_error_model)
+    @api.response(503, "Validation error", send_error_model)
     @api.expect(mail_model, validate=True)
     def post(self):
         mail_params = request.json

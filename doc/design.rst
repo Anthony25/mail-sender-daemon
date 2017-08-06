@@ -32,7 +32,7 @@ Infrastructure
 Different redundancy techniques have been used to host the daemon:
 
 .. _infrastructure_img:
-.. figure:: img/infrastructure.png
+.. figure:: img/infrastructure.svg
     :alt: Infrastructure
     :align: center
     :scale: 90%

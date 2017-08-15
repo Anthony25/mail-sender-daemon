@@ -4,9 +4,10 @@ from . import _BaseProvider
 
 
 class Mailgun(_BaseProvider):
-    def __init__(self, api_key, api_base_url):
+    def __init__(self, api_key, api_base_url, *args, **kwargs):
         self.api_key = api_key
         self.api_base_url = api_base_url
+        super().__init__(*args, **kwargs)
 
     def send(self, src, to, **kwargs):
         send_url = self.get_send_url()

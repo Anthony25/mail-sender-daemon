@@ -1,0 +1,21 @@
+language: python
+
+matrix:
+  include:
+    - python: 3.6-dev
+      env: TOXENV=coveralls CONFIG_FILE=$TRAVIS_BUILD_DIR/config.yml.default
+    - python: 3.4
+      env: TOXENV=py34 CONFIG_FILE=$TRAVIS_BUILD_DIR/config.yml.default
+    - python: 3.5-dev
+      env: TOXENV=py35 CONFIG_FILE=$TRAVIS_BUILD_DIR/config.yml.default
+    - python: 3.6-dev
+      env: TOXENV=py36 CONFIG_FILE=$TRAVIS_BUILD_DIR/config.yml.default
+
+sudo: required
+dist: trusty
+
+install:
+  - pip install -U tox
+
+script:
+  - tox

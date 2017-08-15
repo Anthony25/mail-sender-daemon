@@ -1,6 +1,8 @@
 Mail Server Daemon
 ==================
 
+[![Build Status](https://travis-ci.org/Anthony25/mail-sender-daemon.svg?branch=master)](https://travis-ci.org/Anthony25/mail-sender-daemon)  [![Coverage Status](https://coveralls.io/repos/github/Anthony25/mail-sender-daemon/badge.svg?branch=master)](https://coveralls.io/github/Anthony25/mail-sender-daemon?branch=master)
+
 Daemon allowing to send emails through AmazonSES and Mailgun, with an automatic
 failover.
 
